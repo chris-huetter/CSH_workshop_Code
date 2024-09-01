@@ -1,0 +1,103 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 https://www.tinkercad.com/things/eEKHCVYQOle-copy-of-arduino-simulator-and/editel?tenant=circuits\
+\
+ChatGPT conversation writing the code\
+https://chatgpt.com/share/a7e5b960-a461-411a-b53f-47bf06d7bb84\
+\
+Code backup \
+- where 6 LED strips are simulaneously running left-to-right and right-to-left (blue, red lights)\
+\
+===============================================================================\
+\
+#include <Adafruit_NeoPixel.h>\
+\
+// Define the pins that the LED strips are connected to and the number of LEDs in each strip\
+#define NUM_STRIPS 6\
+const int LED_PINS[NUM_STRIPS] = \{3, 2, 4, 5, 6, 7\};\
+const int NUM_LEDS[NUM_STRIPS] = \{12, 20, 12, 8, 20, 4\};\
+\
+// Define individual parameters for each strip\
+int intensity[NUM_STRIPS] = \{2, 3, 1, 2, 4, 1\};  // Number of LEDs to light up at the same time\
+int delayTime[NUM_STRIPS] = \{50, 100, 75, 50, 120, 80\};  // Speed parameter (lower is faster)\
+\
+// Create an array of NeoPixel objects\
+Adafruit_NeoPixel strips[NUM_STRIPS] = \{\
+    Adafruit_NeoPixel(NUM_LEDS[0], LED_PINS[0], NEO_GRB + NEO_KHZ800),\
+    Adafruit_NeoPixel(NUM_LEDS[1], LED_PINS[1], NEO_GRB + NEO_KHZ800),\
+    Adafruit_NeoPixel(NUM_LEDS[2], LED_PINS[2], NEO_GRB + NEO_KHZ800),\
+    Adafruit_NeoPixel(NUM_LEDS[3], LED_PINS[3], NEO_GRB + NEO_KHZ800),\
+    Adafruit_NeoPixel(NUM_LEDS[4], LED_PINS[4], NEO_GRB + NEO_KHZ800),\
+    Adafruit_NeoPixel(NUM_LEDS[5], LED_PINS[5], NEO_GRB + NEO_KHZ800)\
+\};\
+\
+// Define the colors for each direction\
+uint32_t color_1 = strips[0].Color(255, 0, 0);  // Red color for left-to-right\
+uint32_t color_2 = strips[0].Color(0, 0, 255);  // Blue color for right-to-left\
+\
+// Function to run animations on all strips independently based on max LED count\
+void runAnimation() \{\
+    // Keep track of the direction and position for each strip\
+    bool direction[NUM_STRIPS];  // false = left-to-right, true = right-to-left\
+    int positions[NUM_STRIPS] = \{0\};  // Starting positions for each strip\
+\
+    // Initialize all strips to left-to-right direction initially\
+    for (int k = 0; k < NUM_STRIPS; k++) \{\
+        direction[k] = false;\
+    \}\
+\
+    // Continue running animations until stopped\
+    while (true) \{\
+        for (int k = 0; k < NUM_STRIPS; k++) \{\
+            strips[k].clear();  // Clear current strip\
+\
+            // Determine current color based on direction\
+            uint32_t currentColor = direction[k] ? color_2 : color_1;\
+\
+            // Update the strip based on current position and direction\
+            for (int j = 0; j < intensity[k]; j++) \{\
+                int pos = direction[k] ? strips[k].numPixels() - 1 - (positions[k] - j) : (positions[k] - j);\
+                if (pos >= 0 && pos < strips[k].numPixels()) \{\
+                    strips[k].setPixelColor(pos, currentColor);\
+                \}\
+            \}\
+\
+            strips[k].show();  // Display the updated strip\
+\
+            // Update the position for the next frame\
+            positions[k]++;\
+            if (positions[k] >= strips[k].numPixels() + intensity[k]) \{\
+                positions[k] = 0;  // Reset position\
+                direction[k] = !direction[k];  // Switch direction\
+            \}\
+        \}\
+\
+        // Use the minimum delay time to keep the timing consistent across all strips\
+        int minDelay = delayTime[0];\
+        for (int k = 1; k < NUM_STRIPS; k++) \{\
+            if (delayTime[k] < minDelay) \{\
+                minDelay = delayTime[k];\
+            \}\
+        \}\
+        delay(minDelay);  // Delay based on the fastest strip\
+    \}\
+\}\
+\
+void setup() \{\
+    for (int k = 0; k < NUM_STRIPS; k++) \{\
+        strips[k].begin();  // Initialize each LED strip\
+        strips[k].show();   // Initialize all pixels to 'off'\
+    \}\
+\}\
+\
+void loop() \{\
+    runAnimation();  // Run the animation with individual settings\
+\}\
+\
+===============================================================================\
+}
